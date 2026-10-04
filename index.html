@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Générateur de mots fléchés et croisés</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Archivo+Narrow:wght@500;700&family=Archivo:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+<h1>Mots fléchés &amp; mots croisés sur mesure</h1>
+
+<!-- Étape 1 : la liste de mots -->
+<section id="s1">
+<label for="in">Vos mots, un par ligne</label>
+<textarea id="in" spellcheck="false">chat : Il ronronne sur le canapé
+mer : Elle est bleue et salée
+soleil : Il brille en été
+poisson : Il nage dans l'eau
+orange : Fruit ou couleur
+plage : Sable et parasols
+vent : Il souffle dans les voiles
+voile : Fait avancer le bateau
+nuage : Il passe dans le ciel
+ile : Terre entourée d'eau
+rocher : Gros caillou
+sable : Il remplit le sablier
+etoile : Elle brille la nuit</textarea>
+<p class="hint">Format : <b>mot : définition</b>. Sans définition, l'indice sera le nombre de lettres. Accents et espaces sont ignorés.</p>
+<p id="msg" role="status"></p>
+<div class="bar"><button class="main" id="next">Suivant</button></div>
+</section>
+
+<!-- Étape 2 : le type de grille -->
+<section id="s2" hidden>
+<h2>Quel type de grille voulez-vous ?</h2>
+<div class="choices">
+<button class="choice" data-mode="fleche"><strong>Mots fléchés</strong><span>Les définitions sont dans la grille, avec des flèches.</span></button>
+<button class="choice" data-mode="croise"><strong>Mots croisés</strong><span>Cases numérotées, définitions listées sous la grille.</span></button>
+</div>
+<div class="bar"><button id="back2">Modifier la liste</button></div>
+</section>
+
+<!-- Étape 3 : la grille -->
+<section id="s3" hidden>
+<div class="bar">
+<button id="regen">Nouvelle disposition</button>
+<button id="sol">Afficher la solution</button>
+<button id="chk">Vérifier</button>
+<button id="clr">Effacer mes lettres</button>
+<button id="print">Imprimer</button>
+<button id="back3">Changer de type</button>
+</div>
+<p id="msg2" role="status"></p>
+<div id="wrap"><div id="grid"></div></div>
+<div id="lists" hidden>
+<div><h3>Horizontalement</h3><ol id="lh"></ol></div>
+<div><h3>Verticalement</h3><ol id="lv"></ol></div>
+</div>
+</section>
+</main>
+<script src="script.js"></script>
+</body>
+</html>
