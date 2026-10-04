@@ -14,7 +14,7 @@ function parse(t) {
     const m = l.match(/^([^;:=\t]+)[;:=\t]\s*(.*)$/), w = norm(m ? m[1] : l);
     if (w.length < 2 || seen.has(w)) continue;
     seen.add(w);
-    out.push({ w, d: (m && m[2].trim()) || w.length + ' lettres' });
+    out.push({ w, l: (m ? m[1] : l).trim(), d: (m && m[2].trim()) || w.length + ' lettres' });
   }
   return out;
 }
@@ -94,7 +94,7 @@ const inputs = () => [...document.querySelectorAll('#grid input')];
 const at = (r, c) => inputs().find(i => i.dataset.r == r && i.dataset.c == c);
 
 function render() {
-  $('wl').hidden = true;
+  $('wl').hidden = true; $('ctitle').hidden = true;
   if (mode == 'cache') return renderSearch();
   const fl = mode == 'fleche';
   const { g, b, ws, n } = build(words, fl);
@@ -225,7 +225,7 @@ function buildSearch(list) {
       if (!done) { ok = false; break; }
     }
     if (ok) {
-      for (const row of g) for (let c = 0; c < size; c++) row[c] = row[c] || String.fromCharCode(65 + Math.random() * 26 | 0);
+      for (const row of g) for (let c = 0; c < size; c++) row[c] = row[c] || 'ABCDEFGHIJKLMNOPQRSTUVWXYZÂÉÈÂÉ'[Math.random() * 31 | 0];
       return { g, placed, size };
     }
   }
@@ -238,7 +238,7 @@ function renderSearch() {
   srch = placed; gsize = size; sel = null;
   const grid = $('grid');
   grid.className = 'cache';
-  grid.style.setProperty('--s', size > 16 ? '28px' : '34px');
+  grid.style.setProperty('--s', size > 16 ? '30px' : '36px');
   grid.style.gridTemplateColumns = `repeat(${size},var(--s))`;
   grid.innerHTML = '';
   g.forEach((row, r) => row.forEach((ch, c) => {
@@ -247,8 +247,8 @@ function renderSearch() {
     e.dataset.r = r; e.dataset.c = c;
     grid.appendChild(e);
   }));
-  $('lists').hidden = true; $('wl').hidden = false; $('msg2').textContent = '';
-  $('wlist').innerHTML = [...placed].sort((a, b) => a.w.localeCompare(b.w)).map(p => `<li data-w="${p.w}">${p.w}</li>`).join('');
+  $('lists').hidden = true; $('wl').hidden = false; $('ctitle').hidden = false; $('msg2').textContent = '';
+  $('wlist').innerHTML = words.filter(x => placed.some(p => p.w == x.w)).map(x => `<li data-w="${x.w}">${esc(x.l)}</li>`).join('');
 }
 
 function markFound(p) {
