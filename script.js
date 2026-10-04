@@ -94,6 +94,8 @@ const inputs = () => [...document.querySelectorAll('#grid input')];
 const at = (r, c) => inputs().find(i => i.dataset.r == r && i.dataset.c == c);
 
 function render() {
+  $('wl').hidden = true;
+  if (mode == 'cache') return renderSearch();
   const fl = mode == 'fleche';
   const { g, b, ws, n } = build(words, fl);
   $('msg2').textContent = n < words.length
@@ -158,7 +160,9 @@ $('next').onclick = () => {
   go(2);
 };
 document.querySelectorAll('.choice').forEach(btn => btn.onclick = () => {
-  mode = btn.dataset.mode; resetSol(); go(3); render();
+  mode = btn.dataset.mode; resetSol(); go(3);
+  $('chk').hidden = mode == 'cache'; $('msg2').style.color = '';
+  render();
 });
 $('back2').onclick = () => go(1);
 $('back3').onclick = () => go(2);
@@ -182,6 +186,7 @@ $('grid').addEventListener('keydown', e => {
   else if (e.key == 'Backspace' && !i.value) { const n = (i.dataset.h && at(r, c - 1)) || at(r - 1, c); if (n) n.focus(); }
 });
 $('sol').onclick = () => {
+  if (mode == 'cache') return toggleSol();
   show = !show;
   $('sol').textContent = show ? 'Masquer la solution' : 'Afficher la solution';
   if (show) reveal(); else inputs().forEach(i => { i.value = ''; i.className = ''; });
@@ -189,4 +194,96 @@ $('sol').onclick = () => {
 $('chk').onclick = () => inputs().forEach(i => {
   i.className = !i.value ? '' : i.value.toUpperCase() == i.dataset.a ? 'ok' : 'bad';
 });
-$('clr').onclick = () => { resetSol(); inputs().forEach(i => { i.value = ''; i.className = ''; }); };
+$('clr').onclick = () => { if (mode == 'cache') return clearSearch(); resetSol(); inputs().forEach(i => { i.value = ''; i.className = ''; }); };
+
+/* ---------- Mots cachés ---------- */
+const DIRS = [[0, 1], [1, 0], [1, 1], [-1, 1], [0, -1], [-1, 0], [-1, -1], [1, -1]];
+let srch = [], gsize = 0, sel = null;
+
+// Place les mots dans les 8 directions, agrandit la grille si besoin, puis remplit de lettres au hasard
+function buildSearch(list) {
+  const ws = list.map(o => o.w).sort((a, b) => b.length - a.length);
+  const tot = ws.reduce((s, w) => s + w.length, 0);
+  let size = Math.max(ws[0].length, Math.ceil(Math.sqrt(tot * 1.7)), 8);
+  for (;; size++) for (let t = 0; t < 30; t++) {
+    const g = [...Array(size)].map(() => Array(size).fill('')), placed = [];
+    let ok = true;
+    for (const w of ws) {
+      let done = false;
+      for (let k = 0; k < 200 && !done; k++) {
+        const [dr, dc] = DIRS[Math.random() * 8 | 0], r = Math.random() * size | 0, c = Math.random() * size | 0;
+        const er = r + dr * (w.length - 1), ec = c + dc * (w.length - 1);
+        if (er < 0 || ec < 0 || er >= size || ec >= size) continue;
+        let fit = true;
+        for (let i = 0; i < w.length; i++) { const x = g[r + dr * i][c + dc * i]; if (x && x != w[i]) { fit = false; break; } }
+        if (!fit) continue;
+        const cells = [];
+        for (let i = 0; i < w.length; i++) { g[r + dr * i][c + dc * i] = w[i]; cells.push([r + dr * i, c + dc * i]); }
+        placed.push({ w, cells, found: false });
+        done = true;
+      }
+      if (!done) { ok = false; break; }
+    }
+    if (ok) {
+      for (const row of g) for (let c = 0; c < size; c++) row[c] = row[c] || String.fromCharCode(65 + Math.random() * 26 | 0);
+      return { g, placed, size };
+    }
+  }
+}
+
+const wsCell = (r, c) => $('grid').children[r * gsize + c];
+
+function renderSearch() {
+  const { g, placed, size } = buildSearch(words);
+  srch = placed; gsize = size; sel = null;
+  const grid = $('grid');
+  grid.className = 'cache';
+  grid.style.setProperty('--s', size > 16 ? '28px' : '34px');
+  grid.style.gridTemplateColumns = `repeat(${size},var(--s))`;
+  grid.innerHTML = '';
+  g.forEach((row, r) => row.forEach((ch, c) => {
+    const e = document.createElement('div');
+    e.className = 'ws'; e.textContent = ch;
+    e.dataset.r = r; e.dataset.c = c;
+    grid.appendChild(e);
+  }));
+  $('lists').hidden = true; $('wl').hidden = false; $('msg2').textContent = '';
+  $('wlist').innerHTML = [...placed].sort((a, b) => a.w.localeCompare(b.w)).map(p => `<li data-w="${p.w}">${p.w}</li>`).join('');
+}
+
+function markFound(p) {
+  if (p.found) return;
+  p.found = true;
+  p.cells.forEach(([r, c]) => wsCell(r, c).classList.add('found'));
+  document.querySelector(`#wlist li[data-w="${p.w}"]`).classList.add('found');
+  if (srch.every(x => x.found)) { $('msg2').style.color = 'var(--accent)'; $('msg2').textContent = 'Bravo, tous les mots sont trouvés !'; }
+}
+
+// Premier clic = première lettre, second clic = dernière lettre
+$('grid').addEventListener('click', e => {
+  const t = e.target.closest('.ws');
+  if (!t) return;
+  const r = +t.dataset.r, c = +t.dataset.c;
+  if (!sel) { sel = [r, c]; t.classList.add('sel'); return; }
+  const [r0, c0] = sel; sel = null;
+  document.querySelectorAll('.ws.sel').forEach(x => x.classList.remove('sel'));
+  const p = srch.find(p => {
+    const f = p.cells[0], l = p.cells[p.cells.length - 1];
+    return (f[0] == r0 && f[1] == c0 && l[0] == r && l[1] == c) || (l[0] == r0 && l[1] == c0 && f[0] == r && f[1] == c);
+  });
+  if (p) markFound(p);
+});
+
+function toggleSol() {
+  show = !show;
+  $('sol').textContent = show ? 'Masquer la solution' : 'Afficher la solution';
+  srch.forEach(p => p.cells.forEach(([r, c]) => wsCell(r, c).classList.toggle('sol', show)));
+}
+
+function clearSearch() {
+  resetSol(); sel = null;
+  $('msg2').textContent = ''; $('msg2').style.color = '';
+  document.querySelectorAll('.ws').forEach(x => x.classList.remove('found', 'sol', 'sel'));
+  document.querySelectorAll('#wlist li').forEach(x => x.classList.remove('found'));
+  srch.forEach(p => p.found = false);
+}
