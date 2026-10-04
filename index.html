@@ -9,7 +9,7 @@
 </head>
 <body>
 <main>
-<h1>Mots fléchés &amp; mots croisés sur mesure</h1>
+<h1>Mots fléchés, croisés &amp; cachés sur mesure</h1>
 
 <!-- Étape 1 : la liste de mots -->
 <section id="s1">
@@ -38,6 +38,7 @@ etoile : Elle brille la nuit</textarea>
 <div class="choices">
 <button class="choice" data-mode="fleche"><strong>Mots fléchés</strong><span>Les définitions sont dans la grille, avec des flèches.</span></button>
 <button class="choice" data-mode="croise"><strong>Mots croisés</strong><span>Cases numérotées, définitions listées sous la grille.</span></button>
+<button class="choice" data-mode="cache"><strong>Mots cachés</strong><span>Retrouvez les mots perdus dans un tableau de lettres.</span></button>
 </div>
 <div class="bar"><button id="back2">Modifier la liste</button></div>
 </section>
@@ -54,6 +55,7 @@ etoile : Elle brille la nuit</textarea>
 </div>
 <p id="msg2" role="status"></p>
 <div id="wrap"><div id="grid"></div></div>
+<div id="wl" hidden><h3>Mots à trouver</h3><ul id="wlist"></ul><p class="hint">Cliquez sur la première lettre d'un mot, puis sur sa dernière lettre. Les mots peuvent aller dans toutes les directions.</p></div>
 <div id="lists" hidden>
 <div><h3>Horizontalement</h3><ol id="lh"></ol></div>
 <div><h3>Verticalement</h3><ol id="lv"></ol></div>
